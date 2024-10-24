@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Figures Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
+
+    <style>
+        /* Make sure the body and html take up the full screen */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Prevent any scrollbars */
+        }
+
+        /* Full page map */
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+        }
+
+        /* Chat Input Box at the bottom */
+        #chat-input-container {
+            position: fixed;  
+            bottom: 7%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30%;
+            z-index: 999; /* Ensure it stays above the map */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+        }
+
+        #chat-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 22px;
+            border: none;
+            outline: none;
+            resize: none; /* Disable manual resizing */
+            overflow: hidden; /* Prevent overflow */
+        }
+
+        /* Info Box in the left bottom corner */
+        #info-box {
+            position: fixed;
+            bottom: 60px; /* Just above the input box */
+            left: 10px;
+            width: 250px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            z-index: 999; /* Ensure it stays above the map */
+        }
+
+        /* Style for info box content */
+        #info-box h2, #info-box p {
+            margin: 5px 0;
+            color: rgba(0, 0, 0, 0.9);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Info Box (for showing details of the figure) -->
+    <div id="info-box">
+        <h2 id="name">Name</h2>
+        <p id="info">Info about the historical figure will be displayed here.</p>
+    </div>
+
+    <!-- Chat Input Box -->
+    <div id="chat-input-container">
+        <textarea id="chat-input" placeholder="Ask about a historical figure..." rows="1"></textarea>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+
+    <script>
+        // Initialize the map with a view of the world at zoom level 2
+        var map = L.map('map', {
+            center: [20, 0],    // Coordinates to center the map (latitude, longitude)
+            zoom: 2,            // Default zoom level
+            minZoom: 3,         // Minimum zoom level
+            maxZoom: 14,        // Maximum zoom level
+            maxBoundsViscosity: 0.8  // Adds resistance at boundaries (Southern, Northern limits)
+        });
+
+        // Load and display the OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Limit panning to the world region (Antarctica & Arctic limited)
+        map.setMaxBounds([
+            [-75, -Infinity],  // Southern limit (near Antarctica)
+            [85, Infinity]     // Northern limit (near Arctic)
+        ]);
+
+        // This option makes sure the user can't go out of bounds when zooming out
+        map.on('drag', function() {
+            map.panInsideBounds(map.getBounds());
+        });
+
+        // Adjust the height of the textarea based on content
+        const chatInput = document.getElementById('chat-input');
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto'; // Reset height to auto to shrink when needed
+            this.style.height = (this.scrollHeight) + 'px'; // Set the height to the scrollHeight
+        });
+
+        // Listen for user input and handle when they press Enter
+        chatInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent new lines in textarea
+                let query = event.target.value;
+                handleUserQuery(query);  // Call the function to handle the query
+                chatInput.value = ''; // Clear input after sending
+                chatInput.style.height = 'auto'; // Reset height after sending
+            }
+        });
+
+        // Function to handle user query
+        function handleUserQuery(query) {
+            // Here you'd make an AJAX call to your Flask backend to get the historical data and location
+            fetch('/get-historical-figure', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update the map position to the figure's location
+                if (data.location) {
+                    map.setView([data.location.lat, data.location.lng], 5); // Zoom into the location
+                }
+
+                // Update the info box with figure's details
+                document.getElementById('name').innerText = data.name;
+                document.getElementById('info').innerText = `
+                    Gender: ${data.gender}
+                    Born: ${data.birthDate}
+                    Died: ${data.deathDate}
+                    Ethnicity: ${data.ethnicity}
+                    Known For: ${data.knownFor}
+                `;
+            });
+        }
+    </script>
+
+</body>
+</html>
