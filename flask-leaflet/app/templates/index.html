@@ -52,16 +52,18 @@
         /* Info Box in the left bottom corner */
         #info-box {
             position: fixed;
-            bottom: 60px; /* Just above the input box */
-            left: 10px;
-            width: 250px;
+            bottom: 15%; /* Just above the input box */
+            top: 15%;
+            left: 7%;
+            width: 30%;
             padding: 10px;
             background-color: rgba(255, 255, 255, 0.5);
             border: 1px solid #ccc;
             border-radius: 5px;
             z-index: 999; /* Ensure it stays above the map */
             overflow-y: auto;
-            max-height: 200px;
+            max-height: 85%;
+            display: none;
         }
 
         /* Style for info box content */
@@ -93,47 +95,49 @@
     <script>
         // Initialize the map with a view of the world at zoom level 2
         var map = L.map('map', {
-            center: [20, 0],    // Coordinates to center the map (latitude, longitude)
-            zoom: 2,            // Default zoom level
-            minZoom: 3,         // Minimum zoom level
-            maxZoom: 14,        // Maximum zoom level
-            maxBoundsViscosity: 0.8  // Adds resistance at boundaries (Southern, Northern limits)
+            center: [20, 0],
+            zoom: 2,
+            minZoom: 3,
+            maxZoom: 14,
+            maxBoundsViscosity: 0.8
         });
-
+    
         // Load and display the OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-
-        // Limit panning to the world region (Antarctica & Arctic limited)
+    
+        // Limit panning to the world region
         map.setMaxBounds([
-            [-75, -Infinity],  // Southern limit (near Antarctica)
-            [85, Infinity]     // Northern limit (near Arctic)
+            [-75, -Infinity],
+            [85, Infinity]
         ]);
-
-        // This option makes sure the user can't go out of bounds when zooming out
+    
+        // Ensure the user can't go out of bounds when zooming out
         map.on('drag', function() {
             map.panInsideBounds(map.getBounds());
         });
-
+    
         // Adjust the height of the textarea based on content
         const chatInput = document.getElementById('chat-input');
         chatInput.addEventListener('input', function() {
-            this.style.height = 'auto'; // Reset height to auto to shrink when needed
-            this.style.height = (this.scrollHeight) + 'px'; // Set the height to the scrollHeight
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
         });
-
+    
         // Listen for user input and handle when they press Enter
         chatInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault(); // Prevent new lines in textarea
-                let query = event.target.value;
-                handleUserQuery(query);  // Call the function to handle the query
-                chatInput.value = ''; // Clear input after sending
-                chatInput.style.height = 'auto'; // Reset height after sending
+                let query = event.target.value.trim(); // Get the input value and trim whitespace
+                if (query) { // Proceed only if the input is not empty
+                    handleUserQuery(query);  // Call the function to handle the query
+                    chatInput.value = ''; // Clear input after sending
+                    chatInput.style.height = 'auto'; // Reset height after sending
+                }
             }
         });
-
+    
         // Function to handle user query
         function handleUserQuery(query) {
             // Make an AJAX call to your Flask backend to get the historical data
@@ -153,23 +157,37 @@
                 if (data.location) {
                     map.setView([data.location.lat, data.location.lng], 5); // Zoom into the location
                 }
-
+    
                 // Update the info box with figure's details
                 document.getElementById('name').innerText = data.name;
-
-                // Build the info string for attributes
-                let infoText = '';
-                for (const [key, value] of Object.entries(data.attributes)) {
-                    infoText += `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}<br>`;
+    
+                // Clear previous info
+                const infoBox = document.getElementById('info');
+                infoBox.innerHTML = ''; // Clear previous content
+    
+                // Check if attributes exist and is an object
+                if (data.attributes && typeof data.attributes === 'object') {
+                    // Build the info string for attributes
+                    for (const [key, value] of Object.entries(data.attributes)) {
+                        const attributeTitle = document.createElement('h4'); // Create a heading for each attribute
+                        attributeTitle.innerText = key.charAt(0).toUpperCase() + key.slice(1) + ':'; // Capitalize the first letter
+                        const attributeValue = document.createElement('p'); // Create a paragraph for the value
+                        attributeValue.innerText = value; // Set the value text
+                        
+                        infoBox.appendChild(attributeTitle); // Append the title to the info box
+                        infoBox.appendChild(attributeValue); // Append the value to the info box
+                    }
                 }
-                document.getElementById('info').innerHTML = infoText; // Use innerHTML to support line breaks
+                document.getElementById('info-box').style.display = 'block'; // Display the info box
             })
             .catch(error => {
                 document.getElementById('name').innerText = 'Error';
                 document.getElementById('info').innerText = error.message; // Display the error
+                document.getElementById('info-box').style.display = 'block'; // Display the info box even if there's an error
             });
         }
     </script>
+    
 
 </body>
 </html>

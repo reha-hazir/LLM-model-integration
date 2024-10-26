@@ -7,13 +7,20 @@ class WikipediaSpider(scrapy.Spider):
     
     def __init__(self, figure_name=None, *args, **kwargs):
         super(WikipediaSpider, self).__init__(*args, **kwargs)
-        
-        # Ensure a figure name is provided
+        """
         if figure_name:
             self.start_urls = [f'https://en.wikipedia.org/wiki/{figure_name.replace(" ", "_")}']
             self.figure_name = figure_name  # Store figure name for logging and database entry
         else:
             raise ValueError("A figure name must be provided to initialize the WikipediaSpider.")
+        """
+        figure_name = "Albert Einstein"
+        if figure_name:
+            self.start_urls = [f'https://en.wikipedia.org/wiki/{figure_name.replace(" ", "_")}']
+            self.figure_name = figure_name  # Store figure name for logging and database entry
+        else:
+            raise ValueError("A figure name must be provided to initialize the WikipediaSpider.")
+        
     
     def parse(self, response):
         # Extract the figure's name from the heading
@@ -36,8 +43,8 @@ class WikipediaSpider(scrapy.Spider):
         # Extract each row in the infobox
         for row in infobox.xpath('.//tr'):
             label = row.xpath('.//th/text()').get()
-            data = row.xpath('.//td//text()').getall()
-            
+            data = row.xpath('.//td//text()').extract()
+            print((label,data))
             # Clean the data
             data = [d.strip() for d in data if d.strip()]
             

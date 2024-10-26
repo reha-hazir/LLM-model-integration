@@ -36,12 +36,24 @@ def index():
 def get_historical_figure():
     data = request.get_json()
     query = data.get('query')  # e.g., "Albert Einstein"
-
+    print(f'the data returned from prompt: {query}')
+    
     # Step 1: Check if the figure is in the database
     figure_data = get_figure_from_db(query)
     
     if figure_data:
-        return jsonify(figure_data)
+        print(f'the figure that retrieved from database: {figure_data}')
+
+        response_data = {
+            'name': figure_data.get('name', 'Undefined'),
+            'born': figure_data.get('Born', 'Undefined'),
+            'signature': figure_data.get('Signature', 'Undefined'),
+            'attributes': {key: figure_data[key] for key in figure_data if key not in ['name', 'Born', 'signature']}
+        }
+        
+        return jsonify(response_data)
+    else:
+        return jsonify({'error': 'Figure can not retrieve from the database'}), 404
 
     
     os.chdir('historical_figures')
