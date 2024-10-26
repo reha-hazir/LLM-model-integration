@@ -36,7 +36,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-
         }
 
         #chat-input {
@@ -61,6 +60,8 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             z-index: 999; /* Ensure it stays above the map */
+            overflow-y: auto;
+            max-height: 200px;
         }
 
         /* Style for info box content */
@@ -135,28 +136,37 @@
 
         // Function to handle user query
         function handleUserQuery(query) {
-            // Here you'd make an AJAX call to your Flask backend to get the historical data and location
+            // Make an AJAX call to your Flask backend to get the historical data
             fetch('/get-historical-figure', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: query })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Figure not found'); // Handle error response
+                }
+                return response.json();
+            })
             .then(data => {
-                // Update the map position to the figure's location
+                // Update the map position to the figure's location if it exists
                 if (data.location) {
                     map.setView([data.location.lat, data.location.lng], 5); // Zoom into the location
                 }
 
                 // Update the info box with figure's details
                 document.getElementById('name').innerText = data.name;
-                document.getElementById('info').innerText = `
-                    Gender: ${data.gender}
-                    Born: ${data.birthDate}
-                    Died: ${data.deathDate}
-                    Ethnicity: ${data.ethnicity}
-                    Known For: ${data.knownFor}
-                `;
+
+                // Build the info string for attributes
+                let infoText = '';
+                for (const [key, value] of Object.entries(data.attributes)) {
+                    infoText += `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}<br>`;
+                }
+                document.getElementById('info').innerHTML = infoText; // Use innerHTML to support line breaks
+            })
+            .catch(error => {
+                document.getElementById('name').innerText = 'Error';
+                document.getElementById('info').innerText = error.message; // Display the error
             });
         }
     </script>

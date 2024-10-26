@@ -1,0 +1,30 @@
+flask-leaflet/
+│
+├── app/                              # Flask app directory
+│   ├── __init__.py                   # Initializes the Flask app
+│   ├── app.py                        # Main Flask app file
+│   ├── database.py                   # Database setup and connection logic
+│   ├── templates/
+│   │   └── index.html                # HTML template for the main page
+│   └── static/
+│       ├── css/
+│       │   └── style.css             # Custom CSS styles
+│       └── leaflet/                  # Leaflet library for map functionality
+│           └── leaflet.js            # Leaflet JavaScript library
+│   
+│
+├── historical_figures/                # Scrapy project directory
+│   ├── historical_figures/           # Scrapy settings and main files
+│   │   ├── __init__.py
+│   │   ├── items.py                  # Defines data fields for scraped items
+│   │   ├── middlewares.py            # Middleware for Scrapy (if needed)
+│   │   ├── pipelines.py              # Data pipeline processing (e.g., store to DB)
+│   │   ├── settings.py               # Scrapy settings (rate limit, headers)
+│   │   └── spiders/
+│   │       └── wikipedia_spider.py   # Spider for scraping Wikipedia
+│   ├── scrapy.cfg                    # Scrapy project config file
+│
+├── populate_db.py                    # Script to populate SQLite DB with JSON data
+├── requirements.txt                  # Python dependencies
+├── run.py                            # Main script to run the Flask app
+└── historical_figures.db             # SQLite database file
